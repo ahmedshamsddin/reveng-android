@@ -13,7 +13,7 @@
         android:theme="@android:style/Theme.Material.Light"
         android:usesCleartextTraffic="true">
 
-        <!-- Standard launcher / login screen. This is the decoy. -->
+        <!-- Storefront login screen (launcher). This is the decoy front-end. -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -22,6 +22,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Storefront sign-up screen (internal). -->
+        <activity
+            android:name=".SignupActivity"
+            android:exported="false" />
+
+        <!-- Storefront product catalogue (internal). -->
+        <activity
+            android:name=".ProductsActivity"
+            android:exported="false" />
 
         <!-- Hidden admin dashboard. Intentionally exported and reachable via a
              custom-scheme deep link. This is the vulnerability the player

@@ -1,105 +1,100 @@
 package com.ctf.mobile.deepdive
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
-import android.app.Activity
 
 /**
- * Decoy login screen.
+ * Storefront login screen — the launcher activity and the app's visible face.
  *
- * This is the first thing a player sees. It looks like a normal authentication
- * gate, but the credential check is a dead end: even the "correct" local
- * validation leads nowhere useful. The real path forward is the exported
- * [AdminDashboardActivity] deep link, discovered through static analysis.
+ * This is a static UI only: the "Log In" button performs no authentication, it
+ * just opens the product catalogue so the storefront can be browsed. It exists
+ * as a distraction; the real challenge path is the hidden, exported
+ * [AdminDashboardActivity] deep link found through static analysis.
  */
 class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val root = LinearLayout(this).apply {
+        val pad = UiKit.dp(this, 28)
+
+        val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(48, 48, 48, 48)
+            gravity = Gravity.CENTER_VERTICAL
+            setBackgroundColor(UiKit.BG)
+            setPadding(pad, pad, pad, pad)
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
 
-        val title = TextView(this).apply {
-            text = "Deep Dive — Secure Portal"
-            textSize = 22f
+        val brand = TextView(this).apply {
+            text = "NovaCart"
+            textSize = 34f
+            setTextColor(UiKit.PRIMARY)
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 48)
         }
 
-        val usernameField = EditText(this).apply {
-            hint = "Username"
-        }
-
-        val passwordField = EditText(this).apply {
-            hint = "Password"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or
-                android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-        }
-
-        val loginButton = Button(this).apply {
-            text = "Login"
-        }
-
-        val status = TextView(this).apply {
+        val welcome = UiKit.heading(this, "Welcome back").apply {
             gravity = Gravity.CENTER
-            setPadding(0, 32, 0, 0)
+            layoutParams = UiKit.rowParams(this@MainActivity, bottomDp = 4).apply {
+                topMargin = UiKit.dp(this@MainActivity, 24)
+            }
+        }
+        val prompt = UiKit.subheading(this, "Sign in to continue shopping").apply {
+            gravity = Gravity.CENTER
+            layoutParams = UiKit.rowParams(this@MainActivity, bottomDp = 28)
         }
 
-        loginButton.setOnClickListener {
-            val user = usernameField.text.toString()
-            val pass = passwordField.text.toString()
+        val email = UiKit.field(this, "Email address").apply {
+            layoutParams = UiKit.rowParams(this@MainActivity, bottomDp = 14)
+        }
+        val password = UiKit.field(this, "Password", password = true).apply {
+            layoutParams = UiKit.rowParams(this@MainActivity, bottomDp = 8)
+        }
 
-            if (isValidLogin(user, pass)) {
-                // Deliberate dead end. Even a "successful" local login reveals
-                // nothing — the flag never lives on this path.
-                status.text = "Login accepted. No records available."
-                Toast.makeText(this, "Welcome.", Toast.LENGTH_SHORT).show()
-            } else {
-                status.text = "Invalid Credentials"
+        val forgot = TextView(this).apply {
+            text = "Forgot password?"
+            textSize = 13f
+            setTextColor(UiKit.MUTED)
+            gravity = Gravity.END
+            layoutParams = UiKit.rowParams(this@MainActivity, bottomDp = 20)
+        }
+
+        // Static UI: navigates to the catalogue, performs no real authentication.
+        val loginButton = UiKit.primaryButton(this, "Log In").apply {
+            layoutParams = UiKit.rowParams(this@MainActivity)
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, ProductsActivity::class.java))
             }
         }
 
-        root.addView(title)
-        root.addView(usernameField)
-        root.addView(passwordField)
-        root.addView(loginButton)
-        root.addView(status)
-
-        setContentView(root)
-    }
-
-    /**
-     * A deliberately convoluted local validation that acts as a rabbit hole for
-     * reverse engineers. Satisfying it does NOT surface the flag; the credential
-     * path is a distraction from the real intent-spoofing vulnerability.
-     */
-    private fun isValidLogin(username: String, password: String): Boolean {
-        if (username != "administrator") return false
-        if (password.length != 16) return false
-
-        // XOR-based obfuscated comparison — pure noise to keep analysts busy.
-        val key = "deepdive".toByteArray()
-        val transformed = StringBuilder()
-        for (i in password.indices) {
-            val c = password[i].code xor key[i % key.size].toInt()
-            transformed.append(c.toString(16).padStart(2, '0'))
+        val signupLink = UiKit.link(this, "New here?  Create an account").apply {
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, SignupActivity::class.java))
+            }
         }
 
-        val expected = "5f5a5e5b5a565f5a5f5a5e5b5a565f5a"
-        return transformed.toString() == expected
+        column.addView(brand)
+        column.addView(welcome)
+        column.addView(prompt)
+        column.addView(email)
+        column.addView(password)
+        column.addView(forgot)
+        column.addView(loginButton)
+        column.addView(signupLink)
+
+        val scroll = ScrollView(this).apply {
+            setBackgroundColor(UiKit.BG)
+            addView(column)
+        }
+        setContentView(scroll)
     }
 }
