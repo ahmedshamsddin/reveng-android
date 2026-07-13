@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -26,7 +26,7 @@ import java.util.concurrent.Executors
  *   adb shell am start -W -a android.intent.action.VIEW \
  *     -d "ctf://deep-dive/unlock?token=m0b1l3_1nt3nt_sp00f_2026&backend=http://10.0.2.2:5000"
  */
-class AdminDashboardActivity : AppCompatActivity() {
+class AdminDashboardActivity : Activity() {
 
     companion object {
         // Hardcoded administrative token. Recoverable via static analysis of the
