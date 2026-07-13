@@ -1,0 +1,28 @@
+version: "3.8"
+
+# Deep Dive CTF — per-user backend service.
+#
+# The CTF platform spawns one instance of this stack per player, injecting a
+# unique FLAG value through the environment. The distributed APK is static and
+# identical for every player; only the backend (and its flag) is per-user.
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: deep-dive-backend:latest
+    container_name: deep-dive-backend
+    restart: unless-stopped
+    environment:
+      # Per-user flag. Override this per spawned instance, e.g.:
+      #   FLAG="FLAG{unique_per_player_value}" docker compose up
+      # The CTF platform is expected to set a unique value for each player.
+      - FLAG=${FLAG:-FLAG{r3pl4c3_m3_p3r_us3r}}
+    ports:
+      # Exposed so the emulator/device running the APK can reach the endpoint.
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

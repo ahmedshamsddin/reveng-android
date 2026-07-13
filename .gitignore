@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Android / Gradle
+android-source/.gradle/
+android-source/build/
+android-source/app/build/
+android-source/local.properties
+*.apk
+*.ap_
+*.dex
+.idea/
