@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ctf.mobile.deepdive">
+
+    <!-- The AdminDashboardActivity performs an outbound HTTP call to the
+         player-supplied backend, so INTERNET access is required. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Deep Dive"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light"
+        android:usesCleartextTraffic="true">
+
+        <!-- Standard launcher / login screen. This is the decoy. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Hidden admin dashboard. Intentionally exported and reachable via a
+             custom-scheme deep link. This is the vulnerability the player
+             exploits to bypass the login screen entirely. -->
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="true">
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Deep link: ctf://deep-dive/unlock -->
+                <data
+                    android:scheme="ctf"
+                    android:host="deep-dive"
+                    android:path="/unlock" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
