@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.app.Activity
+import android.util.Base64
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -18,23 +19,39 @@ import java.util.concurrent.Executors
  * Hidden admin dashboard.
  *
  * This activity is exported and bound to the `ctf://deep-dive/unlock` deep link.
- * When launched with a valid administrative [ADMIN_TOKEN] it contacts the
+ * When launched with the correct administrative token it contacts the
  * player-supplied `backend` URL and renders the flag returned by that backend.
+ *
+ * The administrative token is not stored as a plaintext constant: it is held
+ * XOR-obfuscated and Base64-encoded, and reconstructed in memory at runtime by
+ * [resolveAdminToken]. A reverse engineer must read and replay that routine
+ * (or hook it dynamically) rather than simply grepping the decompiled sources.
  *
  * The intended exploit:
  *
  *   adb shell am start -W -a android.intent.action.VIEW \
- *     -d "ctf://deep-dive/unlock?token=m0b1l3_1nt3nt_sp00f_2026&backend=http://10.0.2.2:5000"
+ *     -d "ctf://deep-dive/unlock?token=<ADMIN_TOKEN>&backend=http://10.0.2.2:5000"
  */
 class AdminDashboardActivity : Activity() {
 
     companion object {
-        // Hardcoded administrative token. Recoverable via static analysis of the
-        // decompiled APK — this is the secret the player must find.
-        private const val ADMIN_TOKEN = "m0b1l3_1nt3nt_sp00f_2026"
+        // Administrative token, stored obfuscated so it is not a grep-able
+        // plaintext constant in the decompiled APK. The value is the token bytes
+        // XOR'd with SEED and then Base64-encoded; resolveAdminToken() reverses
+        // this in memory at runtime.
+        private const val DATA = "CQEUAjMCMUVeK0cGRwAAGARUVihtQgEC"
+        private const val SEED = "d1v3_1nt0_th3_sh4d0w_r34lm"
 
-        // Endpoint (with token) that the app hits on the supplied backend.
-        private const val VERIFY_PATH = "/verify-intent?token=$ADMIN_TOKEN"
+        /** Reconstruct the plaintext administrative token at runtime. */
+        private fun resolveAdminToken(): String {
+            val raw = Base64.decode(DATA, Base64.DEFAULT)
+            val key = SEED.toByteArray(Charsets.US_ASCII)
+            val out = ByteArray(raw.size)
+            for (i in raw.indices) {
+                out[i] = (raw[i].toInt() xor key[i % key.size].toInt()).toByte()
+            }
+            return String(out, Charsets.US_ASCII)
+        }
     }
 
     private val backgroundExecutor = Executors.newSingleThreadExecutor()
@@ -92,7 +109,7 @@ class AdminDashboardActivity : Activity() {
         val token = data.getQueryParameter("token")
         val backend = data.getQueryParameter("backend")
 
-        if (token != ADMIN_TOKEN) {
+        if (token != resolveAdminToken()) {
             flagView.text = "Access denied: invalid administrative token."
             return
         }
@@ -114,7 +131,7 @@ class AdminDashboardActivity : Activity() {
         backgroundExecutor.execute {
             val result = runCatching {
                 val base = backend.trimEnd('/')
-                val url = URL("$base$VERIFY_PATH")
+                val url = URL(base + "/verify-intent?token=" + resolveAdminToken())
 
                 val connection = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
