@@ -8,7 +8,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 
 /**
  * Decoy login screen.
@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
  * validation leads nowhere useful. The real path forward is the exported
  * [AdminDashboardActivity] deep link, discovered through static analysis.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
